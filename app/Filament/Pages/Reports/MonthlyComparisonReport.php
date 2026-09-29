@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Exports\MonthlyComparisonExport;
+use App\Filament\Traits\HasPermissions;
 use App\Services\PdfExportService;
 use App\Services\ReportService;
 use BackedEnum;
@@ -22,6 +23,7 @@ use UnitEnum;
 class MonthlyComparisonReport extends Page implements HasTable
 {
     use InteractsWithTable;
+    use HasPermissions;
 
     // ✅ Configuración de la página
     protected static string|BackedEnum|null  $navigationIcon = Heroicon::ChartBar;
@@ -32,6 +34,21 @@ class MonthlyComparisonReport extends Page implements HasTable
 
     // ✅ Filtros del reporte
     public ?array $filters = [];
+
+    public static function getPermissionBase(): string
+    {
+        return 'monthly_comparison_report';
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canViewAny();
+    }
 
     public function mount(): void
     {

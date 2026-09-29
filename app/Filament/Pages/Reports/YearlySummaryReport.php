@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Exports\YearlySummaryExport;
+use App\Filament\Traits\HasPermissions;
 use App\Services\ReportService;
 use App\Models\Currency;
 use App\Services\PdfExportService;
@@ -22,6 +23,7 @@ use UnitEnum;
 class YearlySummaryReport extends Page implements HasTable
 {
     use InteractsWithTable;
+    use HasPermissions;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Calendar;
     protected static string|UnitEnum|null $navigationGroup = 'Reportes';
@@ -30,6 +32,21 @@ class YearlySummaryReport extends Page implements HasTable
     protected string $view = 'filament.pages.reports.yearly-summary-report';
 
     public ?array $filters = [];
+
+    public static function getPermissionBase(): string
+    {
+        return 'yearly_summary_report';
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canViewAny();
+    }
 
     public function mount(): void
     {
@@ -46,12 +63,12 @@ class YearlySummaryReport extends Page implements HasTable
             ->components([
                 Select::make('start_year')
                     ->label('Año inicio')
-                    ->options(fn () => $this->getYearOptions())
+                    ->options(fn() => $this->getYearOptions())
                     ->default((int) date('Y') - 5)
                     ->required(),
                 Select::make('end_year')
                     ->label('Año fin')
-                    ->options(fn () => $this->getYearOptions())
+                    ->options(fn() => $this->getYearOptions())
                     ->default((int) date('Y'))
                     ->required(),
             ])
@@ -95,7 +112,7 @@ class YearlySummaryReport extends Page implements HasTable
         $incomeOriginalData = [];
         $expenseOriginalData = [];
         $netOriginalData = [];
-        
+
         $totals = [
             'income' => 0,
             'expense' => 0,
@@ -107,15 +124,15 @@ class YearlySummaryReport extends Page implements HasTable
 
         foreach ($data as $year) {
             $labels[] = $year['year'];
-            
+
             $incomeData[] = $year['income'];
             $expenseData[] = $year['expense'];
             $netData[] = $year['net'];
-            
+
             $incomeOriginalData[] = $year['income_original'];
             $expenseOriginalData[] = $year['expense_original'];
             $netOriginalData[] = $year['net_original'];
-            
+
             $totals['income'] += $year['income'];
             $totals['expense'] += $year['expense'];
             $totals['net'] += $year['net'];
@@ -166,7 +183,7 @@ class YearlySummaryReport extends Page implements HasTable
             TextColumn::make('net')
                 ->label('Neto (VES)')
                 ->money('VES')
-                ->color(fn ($record) => ($record['net'] ?? 0) >= 0 ? 'success' : 'danger')
+                ->color(fn($record) => ($record['net'] ?? 0) >= 0 ? 'success' : 'danger')
                 ->sortable(),
             TextColumn::make('income_count')
                 ->label('N° Ingresos')
@@ -200,7 +217,7 @@ class YearlySummaryReport extends Page implements HasTable
         try {
             $data = $this->getReportData();
             $viewData = $this->getViewData();
-            
+
             if (empty($data)) {
                 Notification::make()
                     ->warning()
@@ -233,19 +250,18 @@ class YearlySummaryReport extends Page implements HasTable
                 $pdfData,
                 'resumen_anual_' . now()->format('Y-m-d_H-i-s')
             );
-            
         } catch (\Exception $e) {
             Log::error('Error exportando PDF resumen anual', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             Notification::make()
                 ->danger()
                 ->title('Error al generar PDF')
                 ->body($e->getMessage())
                 ->send();
-                
+
             return redirect()->back();
         }
     }

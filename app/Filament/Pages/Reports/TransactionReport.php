@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Exports\TransactionsExport;
+use App\Filament\Traits\HasPermissions;
 use App\Services\ReportService;
 use App\Models\Category;
 use App\Models\Account;
@@ -25,6 +26,7 @@ use UnitEnum;
 class TransactionReport extends Page implements HasTable
 {
     use InteractsWithTable;
+    use HasPermissions;
 
     // ✅ Configuración de la página
     protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
@@ -35,6 +37,21 @@ class TransactionReport extends Page implements HasTable
 
     // ✅ Filtros del reporte
     public ?array $filters = [];
+
+    public static function getPermissionBase(): string
+    {
+        return 'transaction_report';
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canViewAny();
+    }
 
     public function mount(): void
     {

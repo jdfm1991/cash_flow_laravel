@@ -4,10 +4,12 @@ namespace App\Console\Commands;
 
 use App\Services\PermissionService;
 use Illuminate\Console\Command;
+use Spatie\Permission\Models\Permission;
 
 class SyncPermissions extends Command
 {
-    protected $signature = 'permissions:sync {--show : Mostrar todos los permisos}';
+    protected $signature = 'permissions:sync 
+                            {--show : Mostrar todos los permisos}';
     protected $description = 'Sincronizar todos los permisos del sistema';
 
     public function handle(): int
@@ -27,7 +29,9 @@ class SyncPermissions extends Command
                 $this->line("");
                 $this->line("📂 {$data['label']}:");
                 foreach ($data['permissions'] as $permission) {
-                    $this->line("  ✅ {$permission['name']} - {$permission['label']}");
+                    $exists = Permission::where('name', $permission['name'])->exists();
+                    $icon = $exists ? '✅' : '❌';
+                    $this->line("  {$icon} {$permission['name']} - {$permission['label']}");
                 }
             }
         }

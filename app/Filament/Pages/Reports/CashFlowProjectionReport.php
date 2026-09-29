@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Reports;
 
+use App\Filament\Traits\HasPermissions;
 use App\Services\ChartImageService;
 use App\Services\PdfExportService;
 use App\Services\ProjectionService;
@@ -17,6 +18,8 @@ use UnitEnum;
 
 class CashFlowProjectionReport extends Page
 {
+    use HasPermissions;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::ChartBar;
     protected static string|UnitEnum|null $navigationGroup = 'Reportes';
     protected static ?string $navigationLabel = 'Proyección de Flujo';
@@ -24,6 +27,21 @@ class CashFlowProjectionReport extends Page
     protected string $view = 'filament.pages.reports.cash-flow-projection-report';
 
     public ?array $filters = [];
+
+    public static function getPermissionBase(): string
+    {
+        return 'cash_flow_projection_report';
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canViewAny();
+    }
 
     public function mount(): void
     {

@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Exports\CashFlowExport;
+use App\Filament\Traits\HasPermissions;
 use App\Services\ReportService;
 use App\Models\Category;
 use App\Models\Account;
@@ -23,6 +24,7 @@ use UnitEnum;
 class CashFlowReport extends Page implements HasTable
 {
     use InteractsWithTable;
+    use HasPermissions;
 
     protected string $view = 'filament.pages.reports.cash-flow-report';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentChartBar;
@@ -31,6 +33,21 @@ class CashFlowReport extends Page implements HasTable
     protected static ?string $title = 'Reporte de Flujo de Caja';
 
     public ?array $filters = [];
+
+    public static function getPermissionBase(): string
+    {
+        return 'cash_flow_report';
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canViewAny();
+    }
 
     public function mount(): void
     {
@@ -249,7 +266,7 @@ class CashFlowReport extends Page implements HasTable
             'chart_expense' => $chartData['expenseData'] ?? [],
             'chart_net' => $chartData['netData'] ?? [],
             'generated_at' => now()->format('d/m/Y H:i:s'),
-            'base_currency' => 'VES', 
+            'base_currency' => 'VES',
         ];
 
         // Generar PDF usando PdfExportService
