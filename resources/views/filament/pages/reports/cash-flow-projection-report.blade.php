@@ -2,7 +2,7 @@
     {{-- Filtros --}}
     <div class="mb-4">
         <x-filament::section>
-            <form wire:submit.prevent="refresh" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form wire:submit.prevent="refresh" class="mb-4">
                 {{ $this->form }}
                 <div class="flex items-end gap-2">
                     <x-filament::button type="submit" color="primary">

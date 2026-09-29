@@ -49,6 +49,7 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Indigo,
             ])
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->resources([
                 //
             ])
