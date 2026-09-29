@@ -33,8 +33,29 @@
 <x-filament::widget>
     <x-filament::section>
         <div class="space-y-4">
+            <!-- Título -->
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    <x-filament::icon
+                        icon="heroicon-o-building-office"
+                        class="inline-block w-5 h-5 mr-2 text-primary-500"
+                    />
+                    Contexto de Empresa
+                </h3>
+                <span class="text-sm text-gray-500 dark:text-gray-400">
+                    👤 {{ $user?->name ?? 'Usuario' }}
+                </span>
+            </div>
+
             <!-- Empresa Actual -->
-            <div class="flex items-center gap-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">                
+            <div class="flex items-center gap-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                <div class="flex-shrink-0 w-12 h-12 bg-primary-100 dark:bg-primary-800 rounded-full flex items-center justify-center">
+                    <x-filament::icon
+                        icon="heroicon-o-building-office"
+                        class="w-6 h-6 text-primary-600 dark:text-primary-400"
+                    />
+                </div>
+                
                 <div class="flex-1 min-w-0">
                     <div class="text-sm font-medium text-gray-500 dark:text-gray-400">
                         Empresa Activa
@@ -42,6 +63,11 @@
                     <div class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">
                         {{ $companyName ?? 'Sin empresa seleccionada' }}
                     </div>
+                    @if($currentCompanyId)
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            ID: #{{ $currentCompanyId }}
+                        </div>
+                    @endif
                 </div>
 
                 @if(count($allCompanies) > 1)

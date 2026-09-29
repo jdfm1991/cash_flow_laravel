@@ -30,22 +30,25 @@ class DatabaseSeeder extends Seeder
         // 6. Preferencias de usuario (dependen de users)
         $this->call(UserPreferenceSeeder::class);
 
-        // 7. Categorias (sin dependencias)
+        // 7. Permisos (dependen de roles)
+        $this->call(PermissionsSeeder::class);
+
+        // 8. Categorias (sin dependencias)
         $this->call(CategorySeeder::class);
 
-        // 8. Cuentas (dependen de categories)
+        // 9. Cuentas (dependen de categories)
         $this->call(AccountSeeder::class);
 
-        // 9. Tasas de cambio (sin dependencias)
+        // 10. Tasas de cambio (sin dependencias)
         $this->call(ExchangeRateSeeder::class);
 
-        //10. Acciones (sin dependencias)
+        // 11. Acciones (sin dependencias)
         $this->call(AuditLogSeeder::class);
 
-        // 11. Transacciones (dependen de accounts)
+        // 12. Transacciones (dependen de accounts)
         $this->call(TransactionSeeder::class);
 
-        // 12. Cuentas bancarias (dependen de companies)
+        // 13. Cuentas bancarias (dependen de companies)
         $this->call(BankAccountSeeder::class);
 
         // 13. Sesiones de importación (dependen de users)

@@ -26,9 +26,9 @@
     <div class="flex items-center gap-3">
         <!-- Información de la empresa -->
         <div class="flex-1 min-w-0">
-            {{-- <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                 {{ $companyName ?? 'Sin empresa' }}
-            </div> --}}
+            </div> 
         </div>
         
         <!-- Badge de Super Admin -->
