@@ -16,6 +16,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use UnitEnum;
+use App\Filament\Actions\ImportRatesFromTransactionsAction;
 
 class ExchangeRateResource extends Resource
 {

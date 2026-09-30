@@ -5,6 +5,7 @@ namespace App\Filament\Resources\BankAccounts;
 use App\Filament\Resources\BankAccounts\Pages\ListBankAccounts;
 use App\Filament\Resources\BankAccounts\Schemas\BankAccountForm;
 use App\Filament\Resources\BankAccounts\Tables\BankAccountsTable;
+use App\Filament\Traits\FiltersByCompany;
 use App\Helpers\PermissionHelper;
 use App\Models\BankAccount;
 use App\Services\Context\CompanyContext;
@@ -13,11 +14,15 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 class BankAccountResource extends Resource
 {
+    use FiltersByCompany;
+
     protected static ?string $model = BankAccount::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Banknotes;
@@ -50,6 +55,66 @@ class BankAccountResource extends Resource
             /* 'create' => CreateBankAccount::route('/create'),
             'edit' => EditBankAccount::route('/{record}/edit'), */
         ];
+    }
+
+    /**
+     * ✅ Filtrar transacciones por empresa actual
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+        if (!$user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        // ✅ Super Admin puede ver todas las transacciones
+        if ($user->hasRole('super_admin')) {
+            return $query;
+        }
+
+        // ✅ Filtrar por la empresa actual del contexto
+        $companyContext = app(CompanyContext::class);
+        $companyId = $companyContext->getCurrentCompanyId();
+
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        } else {
+            // Si no hay empresa en contexto, no mostrar nada
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query;
+    }
+
+    /**
+     * ✅ Filtrar registros individuales por empresa
+     */
+    public static function getRecordRouteBindingEloquentQuery(): Builder
+    {
+        return parent::getRecordRouteBindingEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ])
+            ->where(function ($query) {
+                $user = auth()->user();
+
+                // Super Admin puede ver cualquier registro
+                if ($user && $user->hasRole('super_admin')) {
+                    return;
+                }
+
+                // Usuarios normales solo ven registros de su empresa
+                $companyContext = app(CompanyContext::class);
+                $companyId = $companyContext->getCurrentCompanyId();
+
+                if ($companyId) {
+                    $query->where('company_id', $companyId);
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            });
     }
 
     /**

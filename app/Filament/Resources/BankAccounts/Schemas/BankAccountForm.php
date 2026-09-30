@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\BankAccounts\Schemas;
 
 use App\Models\Bank;
-use App\Models\Company;
 use App\Models\Currency;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -22,15 +21,8 @@ class BankAccountForm
             ->components([
                 Section::make('Datos de la cuenta')
                     ->schema([
-                        Select::make('company_id')
-                            ->required()
-                            ->label('Empresa')
-                            ->options(fn () => Company::where('is_active', true)
-                                ->pluck('name', 'id'))
-                            ->searchable()
-                            ->preload()
-                            ->default(fn () => auth()->user()?->current_company_id),
-                        
+                        // ✅ Eliminado: company_id (se asigna automáticamente desde el contexto)
+
                         Select::make('bank_id')
                             ->required()
                             ->label('Banco')
@@ -38,7 +30,7 @@ class BankAccountForm
                                 ->pluck('name', 'id'))
                             ->searchable()
                             ->preload(),
-                        
+
                         Select::make('currency_id')
                             ->required()
                             ->label('Moneda')
@@ -57,13 +49,13 @@ class BankAccountForm
                             ->unique(ignoreRecord: true)
                             ->label('Número de cuenta')
                             ->placeholder('Ej: 01081028785478962450'),
-                        
+
                         TextInput::make('alias')
                             ->required()
                             ->maxLength(100)
                             ->label('Alias o nombre descriptivo')
                             ->placeholder('Ej: Cuenta Principal, Cuenta de Nómina'),
-                        
+
                         Select::make('account_type')
                             ->required()
                             ->options([
@@ -78,7 +70,7 @@ class BankAccountForm
                             ])
                             ->default('corriente')
                             ->label('Tipo de cuenta'),
-                        
+
                         TextInput::make('account_holder')
                             ->maxLength(100)
                             ->label('Titular de la cuenta')

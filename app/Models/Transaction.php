@@ -170,14 +170,19 @@ class Transaction extends Model
     protected static function booted()
     {
         static::creating(function ($transaction) {
+            // ✅ Asignar company_id si no está definido
+            if (empty($transaction->company_id)) {
+                $transaction->company_id = auth()->user()?->current_company_id;
+            }
+
             if (auth()->check()) {
                 $transaction->user_id = auth()->id();
             }
 
-            // ✅ Calcular amount
+            // Calcular amount_base_currency
             $transaction->amount_converted = $transaction->calculateBaseCurrencyAmount();
 
-            // ✅ Generar hash
+            // Generar hash
             $transaction->hash = md5(
                 $transaction->company_id .
                     $transaction->amount .
@@ -187,7 +192,7 @@ class Transaction extends Model
                     ($transaction->description ?? '')
             );
         });
-    }
+    }       
 
     // ================================================================
     // MÉTODOS DE CÁLCULO
@@ -198,41 +203,26 @@ class Transaction extends Model
      */
     public function calculateBaseCurrencyAmount(): float
     {
-        // Si el campo ya tiene valor, usarlo
-        if ($this->amount_converted  && $this->amount_converted  > 0) {
-            return $this->amount_converted ;
-        }
-
         try {
-            $currencyService = app(\App\Services\CurrencyService::class);
-            $baseCurrency = $currencyService->getBaseCurrency();
+            $service = app(\App\Services\TransactionCurrencyService::class);
 
-            if (!$baseCurrency) {
-                Log::warning('No se encontró moneda base', [
-                    'transaction' => $this->toArray()
-                ]);
-                return $this->amount;
-            }
-
-            // Si la moneda es la base, el monto es el mismo
-            if ($this->currency_id == $baseCurrency->id) {
-                $this->exchange_rate = 1.0;
-                return $this->amount;
-            }
-
-            // Obtener tasa de cambio
-            $rate = $currencyService->getRate(
+            $result = $service->calculateConversion(
                 $this->currency_id,
-                $baseCurrency->id,
+                (float) $this->amount,
                 $this->date ?? now()->toDateString()
             );
 
-            $this->exchange_rate = $rate;
-            return round($this->amount * $rate, 4);
+            if ($result['success']) {
+                $this->exchange_rate = $result['exchange_rate'];
+                $this->exchange_rate_id = $result['exchange_rate_id'];
+                return $result['amount_converted'];
+            }
+
+            return $this->amount;
         } catch (\Exception $e) {
-            Log::error("Error calculando amount_converted", [
+            \Log::error('Error calculando amount_converted', [
                 'transaction' => $this->toArray(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             return $this->amount;
         }

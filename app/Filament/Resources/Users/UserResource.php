@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 class UserResource extends Resource
-{
+{    
     protected static ?string $model = User::class;
 
     // ✅ Navegación
@@ -172,34 +172,5 @@ class UserResource extends Resource
         // Cambiar según el recurso
         return 'users';
     }
-    /**
-     * ✅ Aplicar filtro de empresa
-     */
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
-
-        $user = auth()->user();
-        if ($user && !$user->hasRole('super_admin')) {
-            // Si no es super_admin, solo ver usuarios de sus empresas
-            $context = static::getCompanyContext();
-            $companyId = $context->getCurrentCompanyId();
-
-            if ($companyId) {
-                $query->whereHas('companies', function ($q) use ($companyId) {
-                    $q->where('companies.id', $companyId);
-                });
-            }
-        }
-
-        return $query;
-    }
-
-    public static function getRecordRouteBindingEloquentQuery(): Builder
-    {
-        return parent::getRecordRouteBindingEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
-    }
+    
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Filament\Traits\HasPermissions;
+use App\Services\AuditService;
 use App\Services\ChartImageService;
 use App\Services\PdfExportService;
 use App\Services\ProjectionService;
@@ -126,6 +127,10 @@ class CashFlowProjectionReport extends Page
     {
         try {
             $data = $this->getProjectionData();
+
+            // ✅ Registrar auditoría
+            app(AuditService::class)->logExport('Cash Flow Projection - PDF');
+
             $viewData = $this->getViewData();
 
             if (empty($data['projection'])) {

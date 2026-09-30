@@ -27,7 +27,7 @@ class PermissionService
             'banks' => ['label' => 'Bancos', 'permissions' => ['view', 'create', 'edit', 'delete']],
             'bank_accounts' => ['label' => 'Cuentas Bancarias', 'permissions' => ['view', 'create', 'edit', 'delete']],
             'currencies' => ['label' => 'Monedas', 'permissions' => ['view', 'create', 'edit', 'delete']],
-            'exchange_rates' => ['label' => 'Tasas de Cambio', 'permissions' => ['view', 'create', 'edit', 'delete']],
+            'exchange_rates' => ['label' => 'Tasas de Cambio', 'permissions' => ['view', 'create', 'edit', 'delete', 'import_from_transactions']],
             'categories' => ['label' => 'Categorías', 'permissions' => ['view', 'create', 'edit', 'delete']],
             'accounts' => ['label' => 'Cuentas Contables', 'permissions' => ['view', 'create', 'edit', 'delete']],
             'subscription_plans' => ['label' => 'Planes de Suscripción', 'permissions' => ['view', 'create', 'edit', 'delete']],

@@ -238,6 +238,12 @@ class ImportService
                 ]);
 
                 $stats['imported']++;
+                app(AuditService::class)->logImport('Migration', [
+                    'total' => $stats['total'],
+                    'imported' => $stats['imported'],
+                    'duplicated' => $stats['duplicated'],
+                    'errors' => $stats['errors'],
+                ]);
             } catch (\Exception $e) {
                 $stats['failed']++;
                 Log::error('Error procesando fila externa', [

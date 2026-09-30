@@ -11,6 +11,13 @@ use App\Services\ExternalConnectionService;
 use App\Services\TransactionImportService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use App\Observers\AuditObserver;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Event;
+use App\Listeners\LogAuthenticationEvents;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -57,6 +64,50 @@ class AppServiceProvider extends ServiceProvider
     {
         // Crear directorios temporales si no existen
         $this->ensureTempDirectoriesExist();
+        // ✅ Registrar listeners de autenticación
+        Event::listen(Login::class, [LogAuthenticationEvents::class, 'handleLogin']);
+        Event::listen(Logout::class, [LogAuthenticationEvents::class, 'handleLogout']);
+        Event::listen(Failed::class, [LogAuthenticationEvents::class, 'handleFailed']);
+
+        // ✅ Registrar eventos Eloquent globales
+        $this->registerAuditEvents();
+    }
+
+    /**
+     * ✅ Registrar eventos Eloquent globales para auditoría
+     */
+    protected function registerAuditEvents(): void
+    {
+        $observer = app(AuditObserver::class);
+
+        // ✅ Escuchar eventos globales de Eloquent
+        Event::listen('eloquent.created: *', function ($eventName, $data) use ($observer) {
+            $model = $data[0] ?? null;
+            if ($model instanceof Model) {
+                $observer->created($model);
+            }
+        });
+
+        Event::listen('eloquent.updated: *', function ($eventName, $data) use ($observer) {
+            $model = $data[0] ?? null;
+            if ($model instanceof Model) {
+                $observer->updated($model);
+            }
+        });
+
+        Event::listen('eloquent.deleted: *', function ($eventName, $data) use ($observer) {
+            $model = $data[0] ?? null;
+            if ($model instanceof Model) {
+                $observer->deleted($model);
+            }
+        });
+
+        Event::listen('eloquent.restored: *', function ($eventName, $data) use ($observer) {
+            $model = $data[0] ?? null;
+            if ($model instanceof Model) {
+                $observer->restored($model);
+            }
+        });
     }
 
     /**

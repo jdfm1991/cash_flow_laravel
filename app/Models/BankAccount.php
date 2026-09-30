@@ -118,6 +118,16 @@ class BankAccount extends Model
         ][$type] ?? 'gray';
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function ($bankAccount) {
+            // ✅ Asignar company_id si no está definido
+            if (empty($bankAccount->company_id)) {
+                $bankAccount->company_id = auth()->user()?->current_company_id;
+            }
+        });
+    }
+
     // ================================================================
     // RELACIONES
     // ================================================================

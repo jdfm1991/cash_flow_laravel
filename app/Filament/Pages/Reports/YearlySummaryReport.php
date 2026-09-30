@@ -6,6 +6,7 @@ use App\Exports\YearlySummaryExport;
 use App\Filament\Traits\HasPermissions;
 use App\Services\ReportService;
 use App\Models\Currency;
+use App\Services\AuditService;
 use App\Services\PdfExportService;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -208,6 +209,9 @@ class YearlySummaryReport extends Page implements HasTable
     {
         $data = $this->getReportData();
 
+        // ✅ Registrar auditoría
+        app(AuditService::class)->logExport('Yearly Summary report - Excel');
+
         return (new YearlySummaryExport($data))
             ->download('resumen_anual_' . now()->format('Y-m-d_H-i-s') . '.xlsx');
     }
@@ -216,6 +220,10 @@ class YearlySummaryReport extends Page implements HasTable
     {
         try {
             $data = $this->getReportData();
+
+            // ✅ Registrar auditoría
+            app(AuditService::class)->logExport('Yearly Summary report - PDF');
+
             $viewData = $this->getViewData();
 
             if (empty($data)) {

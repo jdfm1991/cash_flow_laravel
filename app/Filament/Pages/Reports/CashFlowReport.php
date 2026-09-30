@@ -20,6 +20,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use UnitEnum;
+use App\Services\AuditService;
 
 class CashFlowReport extends Page implements HasTable
 {
@@ -223,6 +224,10 @@ class CashFlowReport extends Page implements HasTable
     public function exportExcel()
     {
         $data = $this->getReportData();
+
+        // ✅ Registrar auditoría
+        app(AuditService::class)->logExport('Cash Flow - Excel');
+
         $summary = $this->getCategorySummary();
 
         $exportData = array_merge($data, [
@@ -241,6 +246,8 @@ class CashFlowReport extends Page implements HasTable
     {
         // Obtener datos del reporte
         $data = $this->getReportData();
+        // ✅ Registrar auditoría
+        app(AuditService::class)->logExport('Cash Flow - PDF');
         $monthlySummary = $this->getMonthlyCategorySummary();
         $chartData = $this->getMonthlyChartData();
 

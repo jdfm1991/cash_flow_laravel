@@ -16,16 +16,6 @@ class ListTransactions extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            // En el dashboard o en una página
-            Action::make('reporte_flujo_caja')
-                ->label('📊 Reporte de Flujo de Caja')
-                ->color('primary')
-                ->url(route('reports.cash-flow.download', [
-                    'start_date' => now()->startOfMonth()->toDateString(),
-                    'end_date' => now()->toDateString(),
-                ]))
-                ->openUrlInNewTab(true),
-
             CreateAction::make()->label('Nueva transacción')
                 ->color('success')
                 ->icon(Heroicon::PlusCircle)

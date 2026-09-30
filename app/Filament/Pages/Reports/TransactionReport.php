@@ -8,6 +8,7 @@ use App\Services\ReportService;
 use App\Models\Category;
 use App\Models\Account;
 use App\Models\BankAccount;
+use App\Services\AuditService;
 use App\Services\PdfExportService;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -309,6 +310,9 @@ class TransactionReport extends Page implements HasTable
     {
         $data = $this->getReportData();
 
+        // ✅ Registrar auditoría
+        app(AuditService::class)->logExport('Transactions Report - Excel');
+
         return (new TransactionsExport($data))
             ->download('transacciones_' . now()->format('Y-m-d_H-i-s') . '.xlsx');
     }
@@ -320,6 +324,9 @@ class TransactionReport extends Page implements HasTable
     {
         try {
             $data = $this->getReportData();
+
+            // ✅ Registrar auditoría
+            app(AuditService::class)->logExport('Transactions Report - PDF');
 
             // ✅ Validar que hay datos
             if (empty($data['transactions'])) {

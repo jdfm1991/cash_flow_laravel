@@ -8,6 +8,7 @@ use App\Filament\Resources\Transactions\Pages\EditTransaction;
 use App\Filament\Resources\Transactions\Pages\ListTransactions;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\Transactions\Tables\TransactionsTable;
+use App\Filament\Traits\FiltersByCompany;
 use App\Helpers\PermissionHelper;
 use App\Models\Transaction;
 use App\Services\Context\CompanyContext;
@@ -23,6 +24,8 @@ use UnitEnum;
 
 class TransactionResource extends Resource
 {
+    use FiltersByCompany;
+
     protected static ?string $model = Transaction::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentArrowUp;
@@ -57,14 +60,65 @@ class TransactionResource extends Resource
         ];
     }
 
+    /**
+     * ✅ Filtrar transacciones por empresa actual
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+        if (!$user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        // ✅ Super Admin puede ver todas las transacciones
+        if ($user->hasRole('super_admin')) {
+            return $query;
+        }
+
+        // ✅ Filtrar por la empresa actual del contexto
+        $companyContext = app(CompanyContext::class);
+        $companyId = $companyContext->getCurrentCompanyId();
+
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        } else {
+            // Si no hay empresa en contexto, no mostrar nada
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query;
+    }
+
+    /**
+     * ✅ Filtrar registros individuales por empresa
+     */
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
-    }
+            ])
+            ->where(function ($query) {
+                $user = auth()->user();
 
+                // Super Admin puede ver cualquier registro
+                if ($user && $user->hasRole('super_admin')) {
+                    return;
+                }
+
+                // Usuarios normales solo ven registros de su empresa
+                $companyContext = app(CompanyContext::class);
+                $companyId = $companyContext->getCurrentCompanyId();
+
+                if ($companyId) {
+                    $query->where('company_id', $companyId);
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            });
+    }
 
     /**
      * ✅ SOBRESCRIBIR canViewAny DIRECTAMENTE

@@ -4,6 +4,7 @@ namespace App\Filament\Pages\Reports;
 
 use App\Exports\MonthlyComparisonExport;
 use App\Filament\Traits\HasPermissions;
+use App\Services\AuditService;
 use App\Services\PdfExportService;
 use App\Services\ReportService;
 use BackedEnum;
@@ -232,6 +233,9 @@ class MonthlyComparisonReport extends Page implements HasTable
     {
         $data = $this->getReportData();
 
+        // ✅ Registrar auditoría
+        app(AuditService::class)->logExport('Monthly Comparison - Excel');
+
         return (new MonthlyComparisonExport($data))
             ->download('comparativo_mensual_' . now()->format('Y-m-d_H-i-s') . '.xlsx');
     }
@@ -246,6 +250,10 @@ class MonthlyComparisonReport extends Page implements HasTable
     {
         try {
             $data = $this->getReportData();
+
+            // ✅ Registrar auditoría
+            app(AuditService::class)->logExport('Monthly Comparison - PDF');
+
             $viewData = $this->getViewData();
 
             // Validar que hay datos

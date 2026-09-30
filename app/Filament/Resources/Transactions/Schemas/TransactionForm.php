@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Transactions\Schemas;
 use App\Models\Account;
 use App\Models\BankAccount;
 use App\Models\Category;
-use App\Models\Company;
 use App\Models\Currency;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -13,6 +12,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class TransactionForm
@@ -26,64 +27,85 @@ class TransactionForm
                         Select::make('type')
                             ->required()
                             ->options([
-                                'income' => 'Ingreso',
-                                'expense' => 'Egreso',
-                                'transfer' => 'Transferencia',
+                                'income' => '💰 Ingreso',
+                                'expense' => '💸 Egreso',
+                                'transfer' => '🔄 Transferencia',
                             ])
                             ->default('income')
                             ->label('Tipo')
                             ->reactive()
-                            ->afterStateUpdated(fn ($set) => $set('account_id', null)),
-
-                        Select::make('company_id')
-                            ->required()
-                            ->label('Empresa')
-                            ->options(fn () => Company::where('is_active', true)
-                                ->pluck('name', 'id'))
-                            ->searchable()
-                            ->preload()
-                            ->default(fn () => auth()->user()?->current_company_id),
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('category_id', null);
+                                $set('account_id', null);
+                            }),
 
                         Select::make('bank_account_id')
                             ->required()
                             ->label('Cuenta bancaria')
-                            ->options(fn () => BankAccount::where('is_active', true)
-                                ->with('bank')
-                                ->get()
-                                ->mapWithKeys(fn ($item) => [
-                                    $item->id => $item->alias . ' (' . ($item->bank?->name ?? 'N/A') . ')'
-                                ]))
+                            ->options(function () {
+                                $companyId = auth()->user()?->current_company_id;
+                                
+                                return BankAccount::where('company_id', $companyId)
+                                    ->where('is_active', true)
+                                    ->with('bank')
+                                    ->get()
+                                    ->mapWithKeys(fn ($item) => [
+                                        $item->id => $item->alias . ' (' . ($item->bank?->name ?? 'N/A') . ')'
+                                    ]);
+                            })
                             ->searchable()
                             ->preload(),
                     ])->columns(2),
 
                 Section::make('Clasificación contable')
                     ->schema([
-                        Select::make('account_id')
-                            ->required()
-                            ->label('Cuenta contable')
-                            ->options(fn ($get) => Account::where('is_active', true)
-                                ->when($get('type'), fn ($query, $type) => 
-                                    $query->whereHas('category', fn ($q) => $q->where('type', $type))
-                                )
-                                ->with('category')
-                                ->get()
-                                ->mapWithKeys(fn ($item) => [
-                                    $item->id => $item->name . ' (' . ($item->category?->name ?? 'N/A') . ')'
-                                ]))
-                            ->searchable()
-                            ->preload(),
-
                         Select::make('category_id')
                             ->required()
                             ->label('Categoría')
-                            ->options(fn ($get) => Category::where('is_active', true)
-                                ->when($get('type'), fn ($query, $type) => 
-                                    $query->where('type', $type)
-                                )
-                                ->pluck('name', 'id'))
+                            ->options(function (Get $get) {
+                                $type = $get('type');
+                                
+                                if (!$type) {
+                                    return [];
+                                }
+
+                                return Category::where('is_active', true)
+                                    ->where('type', $type)
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id');
+                            })
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->reactive()
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('account_id', null);
+                            })
+                            ->disabled(fn (Get $get) => !$get('type'))
+                            ->helperText(fn (Get $get) => !$get('type') 
+                                ? 'Selecciona primero un tipo' 
+                                : 'Selecciona la categoría correspondiente'),
+
+                        Select::make('account_id')
+                            ->required()
+                            ->label('Cuenta contable')
+                            ->options(function (Get $get) {
+                                $categoryId = $get('category_id');
+                                
+                                if (!$categoryId) {
+                                    return [];
+                                }
+
+                                return Account::where('is_active', true)
+                                    ->where('category_id', $categoryId)
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id');
+                            })
+                            ->searchable()
+                            ->preload()
+                            ->disabled(fn (Get $get) => !$get('category_id'))
+                            ->helperText(fn (Get $get) => !$get('category_id') 
+                                ? 'Selecciona primero una categoría' 
+                                : 'Selecciona la cuenta contable'),
                     ])->columns(2),
 
                 Section::make('Monto y moneda')
@@ -93,7 +115,8 @@ class TransactionForm
                             ->numeric()
                             ->minValue(0.01)
                             ->step(0.0001)
-                            ->label('Monto'),
+                            ->label('Monto')
+                            ->helperText('Ingresa el monto en la moneda seleccionada'),
 
                         Select::make('currency_id')
                             ->required()
@@ -123,7 +146,8 @@ class TransactionForm
                             ->maxLength(500)
                             ->label('Descripción')
                             ->rows(3)
-                            ->placeholder('Describe el concepto de la transacción...'),
+                            ->placeholder('Describe el concepto de la transacción...')
+                            ->columnSpanFull(),
 
                         Select::make('payment_method')
                             ->options([
